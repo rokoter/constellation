@@ -2,7 +2,8 @@
 
 Infrastructure-as-code voor een Talos-Linux-**fleet** thuis. Umbrella-monorepo:
 alle clusters, gedeeld platform en documentatie op één plek. GitOps-bron van
-waarheid. Agent-/LLM-onboarding: [`AGENTS.md`](AGENTS.md).
+waarheid. Agent-/LLM-onboarding: [`AGENTS.md`](AGENTS.md). Werkverdeling
+mens/AI: [`CREDITS.md`](CREDITS.md).
 
 ## Fleet
 
