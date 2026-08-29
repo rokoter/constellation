@@ -188,11 +188,9 @@ en `patches/carbon.yaml` (wél veilig, referentie voor de gewenste
 - Proxmox host: pve-dl320-1, VMID 100
 - Status: Talos v1.13.9, **geïnstalleerd op /dev/sda, gebootstrapt en gezond**
   (single-node control plane).
-- Hostname: gebootstrapt als `controlplane1`; hostname-schema is inmiddels
-  **elementen** (zie `from-scratch.md` → "Hostname-schema"). CP1 wordt
-  hernoemd naar `carbon` — `HostnameConfig` in `controlplane.yaml` staat al
-  op `hostname: carbon`, nog toe te passen met `apply-config` +
-  `kubectl delete node controlplane1`.
+- Hostname: **hernoemd naar `carbon`** (2026-08-30) volgens het elementen-schema
+  (zie `from-scratch.md` → "Hostname-schema"). Node `carbon` is `Ready`; oude
+  Node `controlplane1` verwijderd.
 - IP: 10.3.9.10/24 (via Unifi fixed-IP-reservering op MAC-adres, bevestigd
   actief in console)
 - Secure Boot: uit (False) — bevestigd correct
@@ -212,6 +210,16 @@ en `patches/carbon.yaml` (wél veilig, referentie voor de gewenste
 - `kubectl` geïnstalleerd via `kubernetes1.36-client` (Fedora) — matcht
   k8s-server v1.36.3. Node Ready, kube-system pods Running.
 - talosconfig-context: endpoint + node op 10.3.9.10 gezet
+
+### CP1-rename + bootstrap-lessen (2026-08-30)
+
+Bij het opnieuw doorlopen van §6–§7 (rename naar `carbon`) sloeg `bootstrap`
+aan op een **stale gecachte CA** → `x509: certificate signed by unknown
+authority`. Opgelost met expliciete `--talosconfig`/`-e`/`-n`-flags; oude
+`starstuff`-context verwijderd (nieuwe heet `starstuff-1`). `talosctl health`
+liep vast op een timeout die géén fout was — `kubectl get nodes` bevestigde
+`carbon` Ready. Volledig: `session-2026-08-30-cp1-bootstrap.md`. Gotchas
+staan ook in `../AGENTS.md`.
 
 ### Opgeloste boot-issue
 

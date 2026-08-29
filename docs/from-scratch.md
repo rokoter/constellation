@@ -238,14 +238,16 @@ Verwacht na `bootstrap`:
 
 ---
 
-## 8. Huidige staat (bereikt 2026-08-29)
+## 8. Huidige staat (bijgewerkt 2026-08-30)
 
-- **CP1** — Talos v1.13.9 op `/dev/sda`, gebootstrapt. Single-node control
-  plane, `talosctl health` volledig groen. Hostname gebootstrapt als
-  `controlplane1`; hernoemen naar `carbon` staat klaar (zie "CP1 hernoemen").
+- **CP1 = `carbon`** — Talos v1.13.9 op `/dev/sda`, gebootstrapt, `Ready`,
+  control-plane. Single-node control plane.
 - etcd: 1 member, geen learner.
 - Kubernetes v1.36.3, node Ready + schedulable, Flannel CNI.
-- `~/.kube/config` context `admin@starstuff`.
+- `~/.kube/config` context `admin@starstuff`; actieve talosctl-context
+  `starstuff-1` (oude `starstuff`-context verwijderd — zie
+  `session-2026-08-30-cp1-bootstrap.md`).
+- Bootstrap-lessen: `session-2026-08-30-cp1-bootstrap.md`.
 
 ---
 

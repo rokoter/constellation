@@ -28,20 +28,20 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
 
 - [x] Umbrella-monorepo `constellation`, monorepo-layout (`docs/`, `talos/`,
       later `clusters/`, `platform/`, `apps/`).
-- [ ] GitHub-repo `constellation` (private) aanmaken, `git remote add origin`,
-      `git push -u origin main`.
-- [ ] `main` beschermen: PR + CI verplicht (optioneel voor solo, goede gewoonte).
-- [ ] GitHub Project + milestones; roadmap-items → issues. "Project Voyager" =
-      milestone, geen aparte repo.
+- [x] GitHub-repo `rokoter/constellation` (private) live, `main` gepusht.
+- [x] Eerste docs-issues aangemaakt: #1–#4 (Image Factory schematic ID,
+      config-naamgeving, multi-node recept, secrets.yaml YubiKey-backup).
+- [ ] `main` beschermen: overgeslagen voor nu (solo/private) — aanzetten via
+      Settings → Rules → Rulesets zodra een 2e persoon meedoet.
+- [ ] GitHub Project + "Voyager"-milestone; overige roadmap-items → issues.
 - [ ] Renovate aanzetten (chart-/image-/Talos-versies).
 - [ ] Later: SOPS+age zodat versleutelde `secrets.yaml` per cluster wél de
       repo in kan (nu nog gitignored).
 
 ## 1. `starstuff` control plane afmaken
 
-- [ ] **CP1 hernoemen** `controlplane1` → `carbon` (config staat klaar):
-      `cd talos/starstuff && talosctl apply-config --nodes 10.3.9.10 --file controlplane.yaml`,
-      dan `kubectl delete node controlplane1` als `carbon` Ready is.
+- [x] **CP1 hernoemd** `controlplane1` → `carbon` (2026-08-30). Node Ready.
+      Lessen: `session-2026-08-30-cp1-bootstrap.md`.
 - [ ] **CP2 `oxygen`** (`10.3.9.11`, host `pve-dl320-2`, VMID 101) — zelfde
       `secrets.yaml`, `HostnameConfig: oxygen`, `apply-config --insecure`,
       **geen** `bootstrap`.

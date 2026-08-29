@@ -28,13 +28,16 @@ runtime dependency of the others.
 
 ## Current state (2026-08-30)
 
-- `starstuff` **CP1 bootstrapped**: single-node, healthy (`talosctl health`
-  all-green), Talos v1.13.9, Kubernetes v1.36.3, Flannel CNI.
-- CP1 still named `controlplane1`; rename to `carbon` is staged in
-  `talos/starstuff/controlplane.yaml` but **not yet applied**.
-- Not done yet: CP2/CP3, `voyager`, any platform services, GitHub remote.
-- Next concrete steps: `docs/roadmap.md` §0 (GitHub repo) and §1 (rename CP1 →
-  add CP2/CP3 → control-plane VIP).
+- `starstuff` **CP1 = `carbon`**: single-node control plane, `Ready`, Talos
+  v1.13.9, Kubernetes v1.36.3, Flannel CNI.
+- GitHub repo live: `rokoter/constellation` (private). Issues #1–#4 open
+  (docs/backup work).
+- Not done yet: CP2 (`oxygen`) / CP3 (`nitrogen`), control-plane VIP,
+  `voyager`, any platform services.
+- Next concrete steps: `docs/roadmap.md` §1 — CP2 on host 2 per
+  `talos/starstuff/README.md` §5–§7, then CP3, then VIP.
+- Bootstrap lessons from the manual CP1 run:
+  `docs/session-2026-08-30-cp1-bootstrap.md`.
 
 ## Repo layout
 
@@ -62,6 +65,11 @@ apps/            application manifests                          — not created 
 - **Secrets**: never committed in plaintext. Gitignored: `secrets.yaml`,
   `controlplane*.yaml`, `worker*.yaml`, `talosconfig`, `kubeconfig`. Future:
   SOPS+age for encrypted secrets that may enter the repo.
+- **Definition of done** (hard rule): a task is done only when (1) it works
+  and is verified, (2) the relevant docs (README/wiki/from-scratch) are
+  updated to reflect the new state, (3) lessons/gotchas are written into the
+  docs themselves, not just the commit message. The doc update is part of the
+  same task/PR — never a "later" action. Applies to small tasks too.
 
 ## Gotchas
 
@@ -82,6 +90,17 @@ apps/            application manifests                          — not created 
   agents should follow the same rule.)
 - Run `talosctl` commands from `talos/starstuff/`, or pass the full `--file`
   path. Proxmox PBS storage-ID = `pbs-ugreen`.
+- **Stale talosconfig/CA before `bootstrap`**: after any `gen secrets`/`gen
+  config` cycle, run `talosctl config contexts` and remove old contexts with
+  the same cluster name (`talosctl config remove <name>`). Otherwise
+  `bootstrap` picks a cached CA → `x509: certificate signed by unknown
+  authority`. Pass explicit `--talosconfig ./talosconfig -e <ip> -n <ip>` to
+  be safe. Follow §6→§7 in exact order; status-check after every step.
+- **`talosctl health` timeout ≠ failure**: "waiting for all k8s nodes to
+  report" → `context canceled` often just means the kubelet is still
+  registering. Try `kubectl get nodes` before debugging further.
+- See `docs/session-2026-08-30-cp1-bootstrap.md` for the full CP1 bootstrap
+  post-mortem.
 
 ## Start here
 
