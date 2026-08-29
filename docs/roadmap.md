@@ -172,6 +172,10 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
 > Bewust **niet** nu bouwen — de huidige flow (ISO van Proxmox' lokale
 > storage + `apply-config --insecure`) volstaat. Less is more om te starten.
 
+> Gerelateerde issues: **#5** custom retro live-ISO (archiso, amber console,
+> Ventoy) voor clean-room tests · **#6** PXE-netboot van diezelfde omgeving op
+> een geïsoleerd "rode-netwerk"-VLAN (vervolg op #5, aparte sessie).
+
 ### Recovery-VLAN ("code red")
 
 - [ ] Geïsoleerd VLAN, **geen internet-uplink** (of alleen via één expliciete
