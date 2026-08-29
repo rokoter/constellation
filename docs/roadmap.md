@@ -178,8 +178,13 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
 
 ### Recovery-VLAN ("code red")
 
-- [ ] Geïsoleerd VLAN, **geen internet-uplink** (of alleen via één expliciete
-      firewall-regel).
+- [ ] Geïsoleerd VLAN **achter een proxy** (OPNsense of vergelijkbaar):
+      - **uitgaand**: alleen gecontroleerd — GitHub (+ wat de tooling nodig
+        heeft: `talos.dev`, GitHub-releases/CDN, distro-mirror). Alles anders
+        droppen.
+      - **inkomend**: nooit. Geen enkele poort vanaf buiten of andere VLANs.
+      - **oost-west**: alleen terminal-pc / PXE-omgeving → de Proxmox-hosts +
+        de Talos-VM's (voor `talosctl`/console). Verder niets.
 - [ ] Eén klein, cluster-onafhankelijk apparaat (Raspberry Pi / mini-PC —
       niet op `voyager`, want dat kan juist weg zijn):
       - **dnsmasq** = DHCP + TFTP + DNS
