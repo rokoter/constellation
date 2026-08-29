@@ -102,8 +102,31 @@ apps/            application manifests                          — not created 
 - See `docs/session-2026-08-30-cp1-bootstrap.md` for the full CP1 bootstrap
   post-mortem.
 
+## Logging a test / bootstrap session
+
+When a session tests the repo by walking a runbook (esp. a clean bootstrap on
+a fresh machine), capture friction **as you go**:
+
+1. `cp docs/session-TEMPLATE.md docs/session-<YYYY-MM-DD>-<slug>.md` and fill
+   it in step by step — do not reconstruct at the end.
+2. For every problem: exact error line → cause → fix → which doc is missing
+   what.
+3. At the end: turn the doc-gaps into `gh issue create` calls, and fold any
+   cross-version gotchas into this file's "Gotchas" section (that's a DoD
+   doc-update, part of the same task).
+4. Commit the session file on a branch `session/<YYYY-MM-DD>` and push, so it
+   comes back as a PR — or the human pastes it into the main chat.
+
+Known weak spots a fresh session will likely hit: the empty Image Factory
+schematic-ID placeholder (issue #1); `talosctl` v1.13.9 + `kubectl` 1.36 must
+be installed first; a fresh clone has no `secrets.yaml` so §6 `talosctl gen
+secrets` really runs; verify generated secrets do **not** show in
+`git status`. `docs/from-scratch.md` is the authoritative runbook;
+`talos/starstuff/README.md` is the short recipe.
+
 ## Start here
 
 1. `docs/from-scratch.md` — reproducible runbook: Proxmox → working cluster.
 2. `docs/roadmap.md` — fleet model + numbered open items in order.
 3. `docs/wiki.md` — annotated worklog + troubleshooting history (the *why*).
+4. `docs/session-*.md` — past session post-mortems.
