@@ -1,0 +1,23 @@
+# Node-specifieke hostname voor CP1 (`carbon`).
+#
+# LET OP (Talos 1.12+): hostname zit NIET meer in `machine.network.hostname`
+# (v1alpha1). Dat veld naast het door `talosctl gen config` gegenereerde
+# `HostnameConfig`-document geeft:
+#   "static hostname is already set in v1alpha1 config"
+#
+# `HostnameConfig` heeft `auto` en `hostname` als wederzijds uitsluitende
+# velden. Een strategic-merge patch verwijdert de gegenereerde `auto: stable`
+# NIET (siderolabs/talos#12573), dus patchen levert een ongeldig document op
+# met zowel `auto:` als `hostname:`.
+#
+# Werkwijze: na `talosctl gen config` het HostnameConfig-document in
+# controlplane.yaml direct bewerken:
+#   auto: stable   ->   hostname: carbon
+#
+# Hostname-schema: zie from-scratch.md -> "Hostname-schema".
+# control plane = CNO-elementen: carbon (CP1), oxygen (CP2), nitrogen (CP3).
+#
+# Dit bestand dient als referentie voor de gewenste eindstaat van dat document:
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: carbon

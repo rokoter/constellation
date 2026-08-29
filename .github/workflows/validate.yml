@@ -1,0 +1,33 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: yamllint
+        run: |
+          pipx run yamllint --strict \
+            -d "{extends: relaxed, rules: {line-length: {max: 120}}}" .
+
+      - name: hostname-patches zijn losse HostnameConfig-documenten
+        run: |
+          shopt -s nullglob
+          for f in talos/*/patches/*.yaml; do
+            echo "== $f"
+            grep -q '^kind: HostnameConfig$' "$f" || { echo "  mist 'kind: HostnameConfig'"; exit 1; }
+            grep -q '^hostname: .\+$'        "$f" || { echo "  mist 'hostname:'"; exit 1; }
+          done
+
+  # TODO: zodra clusters/ en platform/ bestaan:
+  #   - kustomize build + kubeconform op de manifests
+  #   - talosctl validate op volledige (SOPS-decrypted) machineconfigs

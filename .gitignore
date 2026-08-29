@@ -1,5 +1,16 @@
-controlplane.yaml
-worker.yaml
-talosconfig
+# Cluster-secrets — NOOIT plain committen.
+# (Toekomst: SOPS+age-encrypted mag wél de repo in — zie docs/roadmap.md §3.)
 secrets.yaml
 *.secret.yaml
+
+# Talos machine-configs: bevatten CA private keys + join-tokens in plaintext.
+# Pattern zonder slash = matcht op elke diepte (talos/<cluster>/controlplane.yaml).
+# Node-specifieke hostname-patches heten naar hun element (carbon.yaml, …) en
+# blijven dus wél tracked.
+controlplane*.yaml
+worker*.yaml
+
+# Client-credentials
+talosconfig
+kubeconfig
+*.kubeconfig
