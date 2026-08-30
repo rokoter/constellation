@@ -27,7 +27,7 @@ cd talos/starstuff
 talosctl gen secrets -o secrets.yaml
 
 # Basis-configs met die secrets
-talosctl gen config --with-secrets secrets.yaml starstuff https://10.3.9.10:6443
+talosctl gen config --with-secrets secrets.yaml starstuff https://10.30.4.1:6443
 
 # HostnameConfig-document per node: `auto: stable` -> `hostname: <element>`
 #   CP1 = carbon, CP2 = oxygen, CP3 = nitrogen   (zie patches/ voor de eindstaat)
@@ -42,7 +42,7 @@ talosctl validate --config controlplane.yaml --mode metal
 
 ```bash
 cd talos/starstuff
-talosctl apply-config --insecure --nodes 10.3.9.10 --file controlplane.yaml
+talosctl apply-config --insecure --nodes 10.30.4.1 --file controlplane.yaml
 # CP1 alleen, eenmalig:
 talosctl bootstrap
 ```

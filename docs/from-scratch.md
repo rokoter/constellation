@@ -14,8 +14,17 @@ Voor **achtergrond, rationale en troubleshooting-historie** zie
 - **Talos**: v1.13.9 (node én `talosctl`-client — gelijk houden)
 - **Kubernetes**: v1.36.3 (komt mee met Talos 1.13.9)
 - **Clusternaam**: `starstuff`
-- **VLAN 9** — `10.3.9.0/24`, gateway `10.3.9.254`
-- **CP1**: `10.3.9.10`, Proxmox-host `pve-dl320-1`, VMID 100
+- **VLAN 4** — `10.30.4.0/24` · gateway/DNS `<in te vullen>`
+- **CP1**: `10.30.4.1`, Proxmox-host `pve-dl320-1` (mgmt `10.30.3.1`), VMID 100
+- CP2 → `10.30.4.2` (`pve-dl320-2`, mgmt `10.30.3.2`) ·
+  CP3 → `10.30.4.3` (`pve-dl320-3`, mgmt `10.30.3.3`)
+
+> **Netwerkwaarden zijn omgevings-specifiek.** VLAN, subnet, node-IP's en
+> Proxmox-mgmt-IP's hieronder zijn die van de clean-room-bootstrap van
+> 2026-08-30 (`session-2026-08-30-clean-room-cp1.md`). De éérste bootstrap
+> draaide op VLAN 9 / `10.3.9.x` (`session-2026-08-30-cp1-bootstrap.md`).
+> Gateway, subnet-prefix en DNS zijn in de clean-room-run niet vastgelegd —
+> vul je eigen omgeving in. (Parameteriseren: zie de open issue.)
 
 > Hostname-schema: **elementen** (zie "Hostname-schema" onderaan). Control
 > plane = CNO: `carbon` (CP1), `oxygen` (CP2), `nitrogen` (CP3).
@@ -25,7 +34,7 @@ Voor **achtergrond, rationale en troubleshooting-historie** zie
 ## 0. Vereisten
 
 - 3× HP ProLiant DL320 G8 v2, elk met Proxmox VE 9.2 bare-metal geïnstalleerd
-- Unifi-netwerk met VLAN 9 beschikbaar, gateway `10.3.9.254`
+- Unifi-netwerk met VLAN 4 beschikbaar, gateway `<in te vullen>`
 - Fedora-werkstation met internettoegang
 - (optioneel) Proxmox Backup Server op `10.3.2.14`
 
@@ -102,7 +111,12 @@ kubectl version --client                         # v1.36.x
 4. Upload de ISO naar Proxmox: elke host → local storage → ISO Images →
    Upload (of `wget` in `/var/lib/vz/template/iso/`).
 
-> Schematic ID hier invullen zodra bekend: `________________________`
+> **Schematic ID** (clean-room-run 2026-08-30):
+> `ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515`
+>
+> ⚠️ Verifieer dat dit schematic exact de extensie-set van stap 2 heeft
+> (`siderolabs/qemu-guest-agent`, verder niets) — dat is niet bevestigd in
+> het sessie-transcript.
 
 ---
 
@@ -120,7 +134,7 @@ Op de Proxmox-host, VM met **exact** deze instellingen:
 | Disk | 32 GB | |
 | vCPU | 2, type `host` | |
 | RAM | 4096 MB | |
-| Netwerk | VirtIO, bridge op **VLAN 9** | |
+| Netwerk | VirtIO, bridge op **VLAN 4** | |
 | QEMU Guest Agent | aan | extensie zit in de custom ISO |
 | CD/DVD | de Talos-ISO | |
 
@@ -128,7 +142,7 @@ Op de Proxmox-host, VM met **exact** deze instellingen:
 
 - Reserveer per node een vast IP **op MAC-adres** (Talos stuurt in
   maintenance-mode geen DHCP-hostname mee).
-- CP1 → `10.3.9.10`, CP2 → `.11`, CP3 → `.12`.
+- CP1 → `10.30.4.1`, CP2 → `10.30.4.2`, CP3 → `10.30.4.3`.
 
 ### Booten
 
@@ -136,9 +150,9 @@ Op de Proxmox-host, VM met **exact** deze instellingen:
 2. Wacht tot de console **"maintenance mode"** toont en een IP heeft.
 3. Verifieer:
    ```bash
-   ping -c2 10.3.9.10
-   talosctl get disks --insecure --nodes 10.3.9.10        # sda ~34 GB zichtbaar
-   talosctl get systemdisk --insecure --nodes 10.3.9.10   # LEEG = nog niks op disk
+   ping -c2 10.30.4.1
+   talosctl get disks --insecure --nodes 10.30.4.1        # sda ~34 GB zichtbaar
+   talosctl get systemdisk --insecure --nodes 10.30.4.1   # LEEG = nog niks op disk
    ```
 
 ---
@@ -155,7 +169,7 @@ talosctl gen secrets -o secrets.yaml
 
 # Basis-configs met die gedeelde secrets
 talosctl gen config --with-secrets secrets.yaml \
-  starstuff https://10.3.9.10:6443
+  starstuff https://10.30.4.1:6443
 # -> controlplane.yaml, worker.yaml, talosconfig
 ```
 
@@ -198,18 +212,25 @@ talosctl validate --config controlplane.yaml --mode metal
 ```bash
 cd talos/starstuff
 
-# 1. Config toepassen — node gaat uit maintenance mode, installeert op
-#    /dev/sda, reboot naar de beveiligde API (mTLS).
-talosctl apply-config --insecure --nodes 10.3.9.10 --file controlplane.yaml
+# 0. Oude talosctl-contexts opruimen — anders hernoemt `config merge` (stap 3)
+#    stil naar `starstuff-1/-2/-3` en kan `bootstrap` een oude, gecachte CA
+#    pakken (-> x509: certificate signed by unknown authority).
+talosctl config contexts
+talosctl config remove starstuff        # idem starstuff-1, -2, … indien aanwezig
+
+# 1. Config toepassen — node verlaat maintenance mode en installeert op
+#    /dev/sda; de API komt terug op mTLS. De CLI-melding kan
+#    "Applied configuration without a reboot" zijn — dat is oké.
+talosctl apply-config --insecure --nodes 10.30.4.1 --file controlplane.yaml
 
 # 2. Wacht tot de beveiligde API terug is (~1-2 min)
-until talosctl --talosconfig ./talosconfig -e 10.3.9.10 -n 10.3.9.10 \
+until talosctl --talosconfig ./talosconfig -e 10.30.4.1 -n 10.30.4.1 \
       version >/dev/null 2>&1; do sleep 5; done
 
 # 3. talosconfig als default zetten
 talosctl config merge ./talosconfig
-talosctl config endpoint 10.3.9.10
-talosctl config node 10.3.9.10
+talosctl config endpoint 10.30.4.1
+talosctl config node 10.30.4.1
 
 # 4. Verifieer pre-bootstrap staat
 talosctl get systemdisk          # DISK = sda  -> geïnstalleerd
@@ -238,16 +259,22 @@ Verwacht na `bootstrap`:
 
 ---
 
-## 8. Huidige staat (bijgewerkt 2026-08-30)
+## 8. Huidige staat (bijgewerkt 2026-08-30 — clean-room-run)
 
-- **CP1 = `carbon`** — Talos v1.13.9 op `/dev/sda`, gebootstrapt, `Ready`,
-  control-plane. Single-node control plane.
+- **CP1 = `carbon`** — Talos v1.13.9 op `/dev/sda`, IP `10.30.4.1` (VLAN 4),
+  gebootstrapt, `Ready`, control-plane. Single-node control plane.
+- Kernel `6.18.44-talos`, containerd `2.2.7`.
 - etcd: 1 member, geen learner.
 - Kubernetes v1.36.3, node Ready + schedulable, Flannel CNI.
+- `talosctl health --server=false`: alle checks OK.
 - `~/.kube/config` context `admin@starstuff`; actieve talosctl-context
-  `starstuff-1` (oude `starstuff`-context verwijderd — zie
-  `session-2026-08-30-cp1-bootstrap.md`).
-- Bootstrap-lessen: `session-2026-08-30-cp1-bootstrap.md`.
+  `starstuff-3` (contexts van eerdere runs stapelden op — zie de
+  context-opruimstap in §7).
+- Image Factory schematic
+  `ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515`
+  (Secure Boot voorlopig geparkeerd).
+- Sessies: `session-2026-08-30-clean-room-cp1.md` (deze staat, VLAN 4) ·
+  `session-2026-08-30-cp1-bootstrap.md` (eerste bootstrap, VLAN 9).
 
 ---
 
@@ -255,16 +282,16 @@ Verwacht na `bootstrap`:
 
 ### CP2 en CP3 toevoegen
 
-1. VM's bouwen op host 2/3 (§5), DHCP-reservering `.11` (`oxygen`) /
-   `.12` (`nitrogen`).
+1. VM's bouwen op host 2/3 (§5), DHCP-reservering `10.30.4.2` (`oxygen`) /
+   `10.30.4.3` (`nitrogen`).
 2. `controlplane.yaml` per node — **zelfde `secrets.yaml`**, alleen het
    `HostnameConfig`-document aanpassen (`hostname: oxygen` / `nitrogen`).
-   Endpoint in de config blijft `https://10.3.9.10:6443` (of later een VIP).
-3. `talosctl apply-config --insecure --nodes 10.3.9.11 --file controlplane-oxygen.yaml`
-   (idem `.12` / `nitrogen`).
+   Endpoint in de config blijft `https://10.30.4.1:6443` (of later een VIP).
+3. `talosctl apply-config --insecure --nodes 10.30.4.2 --file controlplane-oxygen.yaml`
+   (idem `10.30.4.3` / `nitrogen`).
 4. **Geen** `talosctl bootstrap` — deze nodes joinen het bestaande
    etcd-quorum automatisch.
-5. Controle: `talosctl -n 10.3.9.10 etcd members` (3 members),
+5. Controle: `talosctl -n 10.30.4.1 etcd members` (3 members),
    `kubectl get nodes` (3× Ready).
 
 > Overweeg daarna een control-plane VIP (`machine.network.interfaces[].vip`)
@@ -274,7 +301,7 @@ Verwacht na `bootstrap`:
 
 - PBS-storage + `talosctl etcd snapshot`-cron op host 2/3 (§Backupstrategie).
 - Worker-VM's — pas plannen zodra de persistent-storage-oplossing bekend is.
-- Firewall-regel Unifi: alleen management-VLAN → VLAN 9 op 6443, 50000, 50001.
+- Firewall-regel Unifi: alleen management-VLAN → VLAN 4 op 6443, 50000, 50001.
 
 ---
 
@@ -290,7 +317,7 @@ Verwacht na `bootstrap`:
   raadt dit expliciet af.
 - De ondersteunde DR-weg is een consistente etcd-snapshot:
   ```bash
-  talosctl -n 10.3.9.10 etcd snapshot etcd-$(date +%F).snapshot
+  talosctl -n 10.30.4.1 etcd snapshot etcd-$(date +%F).snapshot
   ```
   Restore via `talosctl bootstrap --recover-from=<snapshot>`.
 - **Nu (single-node CP):** etcd-snapshots zijn essentieel — geen redundantie.
@@ -358,7 +385,7 @@ CP1 is al toegepast als `controlplane1`. Hernoemen:
 ```bash
 cd talos/starstuff
 # 1. HostnameConfig in controlplane.yaml staat al op `hostname: carbon`
-talosctl apply-config --nodes 10.3.9.10 --file controlplane.yaml
+talosctl apply-config --nodes 10.30.4.1 --file controlplane.yaml
 
 # 2. Talos zet de hostname live. De k8s Node-objectnaam volgt de hostname:
 #    er verschijnt een nieuwe Node `carbon`, de oude blijft als NotReady staan.

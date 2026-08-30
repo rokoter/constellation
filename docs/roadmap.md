@@ -64,11 +64,12 @@ aangemaakt), de GitOps-root in `clusters/sol/`.
 ## 1. `starstuff` control plane afmaken
 
 - [x] **CP1 hernoemd** `controlplane1` → `carbon` (2026-08-30). Node Ready.
-      Lessen: `session-2026-08-30-cp1-bootstrap.md`.
-- [ ] **CP2 `oxygen`** (`10.3.9.11`, host `pve-dl320-2`, VMID 101) — zelfde
+      Lessen: `session-2026-08-30-cp1-bootstrap.md`. Clean-room-herbootstrap op
+      VLAN 4 (`10.30.4.1`): `session-2026-08-30-clean-room-cp1.md`.
+- [ ] **CP2 `oxygen`** (`10.30.4.2`, host `pve-dl320-2`, VMID 101) — zelfde
       `secrets.yaml`, `HostnameConfig: oxygen`, `apply-config --insecure`,
       **geen** `bootstrap`.
-- [ ] **CP3 `nitrogen`** (`10.3.9.12`, host `pve-dl320-3`, VMID 102) — idem.
+- [ ] **CP3 `nitrogen`** (`10.30.4.3`, host `pve-dl320-3`, VMID 102) — idem.
 - [ ] **Control-plane VIP** (`machine.network.interfaces[].vip`) zodat de API
       niet aan `carbon` hangt.
 - [ ] Verify: 3 etcd members, 3× Ready, VIP-failover getest.
@@ -84,7 +85,7 @@ aangemaakt), de GitOps-root in `clusters/sol/`.
       ~30 W always-on voor het drietal. Geen ECC op de meeste N100 — accepteren
       of Ryzen-embedded als het moet.
 - [ ] **UPS** op de `sol`-stack + NUT voor nette shutdown.
-- [ ] **Eigen VLAN/subnet** voor `sol`, los van VLAN 9.
+- [ ] **Eigen VLAN/subnet** voor `sol`, los van VLAN 4 (`starstuff`).
 - [ ] **SSD-swap DL320-hosts**: 2× Samsung PM1633a 480 GB SAS per host in
       ZFS mirror (`rpool`), i.p.v. de trage HDD's.
 
@@ -179,8 +180,8 @@ aangemaakt), de GitOps-root in `clusters/sol/`.
       `siderolabs/qemu-guest-agent` + `talosctl upgrade`. Meenemen bij de
       storage-extensions (`zfs`/`iscsi-tools`/`nfs-utils` zodra storage
       gekozen is).
-- [ ] **Firewall** (Unifi): mgmt-VLAN → VLAN 9 op 6443/50000/50001;
-      `sol`-VLAN ↔ VLAN 9 alleen voor beheer. iLO-isolatie: zie §6.
+- [ ] **Firewall** (Unifi): mgmt-VLAN → VLAN 4 op 6443/50000/50001;
+      `sol`-VLAN ↔ VLAN 4 alleen voor beheer. iLO-isolatie: zie §6.
 - [ ] **Upgrade-runbook**: `talosctl upgrade` + `talosctl upgrade-k8s`,
       volgorde, kubectl mee-swappen, per cluster.
 - [ ] **Security** — PSA staat al op `baseline/restricted`; verder

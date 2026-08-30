@@ -31,17 +31,20 @@ yet; `starstuff` (CP1 `carbon`) is the current reality.
 
 ## Current state (2026-08-30)
 
-- `starstuff` **CP1 = `carbon`**: single-node control plane, `Ready`, Talos
-  v1.13.9, Kubernetes v1.36.3, Flannel CNI.
-- GitHub repo live: `rokoter/constellation` (private). Issues #1–#4 open
-  (docs/backup work).
+- `starstuff` **CP1 = `carbon`**: single-node control plane, `Ready`, IP
+  `10.30.4.1` (VLAN 4), Talos v1.13.9, Kubernetes v1.36.3, Flannel CNI.
+  Re-validated by a clean-room bootstrap on 2026-08-30.
+- GitHub repo live: `rokoter/constellation` (private). Issues #2–#6 open
+  (docs/backup/bootstrap work; #1 closed — schematic ID recorded in
+  `docs/from-scratch.md` §4).
 - Not done yet: CP2 (`oxygen`) / CP3 (`nitrogen`), control-plane VIP, `sol`
   (the planned always-on base, bootstrapped from `starstuff`), `voyager` and
   later fleet members, any platform services.
 - Next concrete steps: `docs/roadmap.md` §1 — CP2 on host 2 per
   `talos/starstuff/README.md` §5–§7, then CP3, then VIP.
-- Bootstrap lessons from the manual CP1 run:
-  `docs/session-2026-08-30-cp1-bootstrap.md`.
+- Bootstrap lessons: `docs/session-2026-08-30-cp1-bootstrap.md` (first
+  bootstrap, VLAN 9) and `docs/session-2026-08-30-clean-room-cp1.md`
+  (clean-room re-run, VLAN 4).
 
 ## Repo layout
 
@@ -102,11 +105,23 @@ apps/            application manifests                          — not created 
   `bootstrap` picks a cached CA → `x509: certificate signed by unknown
   authority`. Pass explicit `--talosconfig ./talosconfig -e <ip> -n <ip>` to
   be safe. Follow §6→§7 in exact order; status-check after every step.
+  A **clean-room / fresh-machine test must start from an empty
+  `~/.talos/config`** — verify with `talosctl config contexts` before `gen
+  secrets`. Otherwise `config merge` silently appends `-1`/`-2`/`-3` to the
+  context name (`starstuff-3` in the 2026-08-30 clean-room run) and the
+  accumulation makes the stale-CA trap easy to hit.
+- **Runbook network values are environment-specific**: `docs/from-scratch.md`
+  now uses VLAN 4 / `10.30.4.x` (Proxmox mgmt `10.30.3.x`) from the 2026-08-30
+  clean-room run; the first bootstrap used VLAN 9 / `10.3.9.x`. Gateway,
+  subnet prefix and DNS were not captured — substitute your own; don't treat
+  any of these as canonical infra facts.
 - **`talosctl health` timeout ≠ failure**: "waiting for all k8s nodes to
   report" → `context canceled` often just means the kubelet is still
-  registering. Try `kubectl get nodes` before debugging further.
-- See `docs/session-2026-08-30-cp1-bootstrap.md` for the full CP1 bootstrap
-  post-mortem.
+  registering. Try `kubectl get nodes` before debugging further. (Did not
+  recur in the 2026-08-30 clean-room run — health passed in one go.)
+- See `docs/session-2026-08-30-cp1-bootstrap.md` and
+  `docs/session-2026-08-30-clean-room-cp1.md` for the CP1 bootstrap
+  post-mortems.
 
 ## Logging a test / bootstrap session
 
@@ -123,11 +138,13 @@ a fresh machine), capture friction **as you go**:
 4. Commit the session file on a branch `session/<YYYY-MM-DD>` and push, so it
    comes back as a PR — or the human pastes it into the main chat.
 
-Known weak spots a fresh session will likely hit: the empty Image Factory
-schematic-ID placeholder (issue #1); `talosctl` v1.13.9 + `kubectl` 1.36 must
-be installed first; a fresh clone has no `secrets.yaml` so §6 `talosctl gen
-secrets` really runs; verify generated secrets do **not** show in
-`git status`. `docs/from-scratch.md` is the authoritative runbook;
+Known weak spots a fresh session will likely hit: the Image Factory schematic
+ID is now recorded in `docs/from-scratch.md` §4, but its exact extension set
+is still unverified; `talosctl` v1.13.9 + `kubectl` 1.36 must be installed
+first; a fresh clone has no `secrets.yaml` so §6 `talosctl gen secrets` really
+runs; verify generated secrets do **not** show in `git status`; start from an
+empty `~/.talos/config` (see the stale-CA gotcha).
+`docs/from-scratch.md` is the authoritative runbook;
 `talos/starstuff/README.md` is the short recipe.
 
 ## Start here
