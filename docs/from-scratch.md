@@ -323,7 +323,8 @@ daarnaast als k8s-label (`node-class=…`) en Talos `machine.type`.
 | general compute worker | overgangsmetalen | `iron`, `nickel`, `cobalt`, `titanium`, `chromium`, `vanadium` | de werkpaarden — sterk, structureel |
 | storage worker | dichte / zware metalen | `tungsten`, `osmium`, `iridium`, `lead`, `gold`, `platinum` | dicht = houdt veel vast |
 | GPU / accelerator worker | halfgeleiders | `silicon`, `germanium`, `gallium`, `arsenic` | halfgeleiders = compute-versnelling |
-| edge / standalone cluster | edelgassen | `helium`, `neon`, `argon`, `krypton`, `xenon` | inert, stabiel, self-contained — draait alleen door (zie ROADMAP) |
+| base-cluster / fleet-hub | aardalkalimetalen | `beryllium`, `magnesium`, `calcium` | stabiel, structureel — de vaste kern van de fleet (`sol`) |
+| autonome managed cluster | edelgassen | `helium`/`neon`/`argon` (`voyager`) · `krypton`/`xenon`/`radon` (`moonbase`) · … | inert, self-contained — draait zelfstandig door (zie `roadmap.md`) |
 | ephemeral / burst (optioneel) | alkalimetalen | `lithium`, `sodium`, `potassium` | reactief, kortlevend |
 
 Waarom dit schema:

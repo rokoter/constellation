@@ -3,24 +3,46 @@
 Losse items, grofweg op volgorde. Huidige staat: [`from-scratch.md`](./from-scratch.md).
 Achtergrond/troubleshooting: [`wiki.md`](./wiki.md). Repo-opzet: [`../README.md`](../README.md).
 
-## Fleet-model (rolverschuiving)
+## Fleet-model
 
-De rollen zijn omgedraaid t.o.v. de oorspronkelijke wiki:
+Mentaal model: **`starstuff` bouwt `sol`; `sol` lanceert `voyager`s.**
 
 | cluster | hardware | rol | uptime |
 |---|---|---|---|
-| **`voyager`** | 3× N100-class mini-PC, zuinig | **always-on hub**: management-plane (Git, GitOps, provisioning), observability, en de "echte" 24/7-apps | permanent aan, UPS |
-| **`starstuff`** | 3× HP DL320 G8 | **burst-compute** in een flight case — zware/bulk workloads, dev/test | gaat af en toe aan |
-| `moonbase` / `mars` / `earth` (later) | n.t.b. | extra workload-clusters, gestart vanáf `voyager` | naar behoefte |
+| **`sol`** *(gepland)* | 3× N100-class mini-PC, zuinig | **always-on base / fleet-hub**: management-plane (Git, GitOps, provisioning), observability, DR-coördinatie, en de "echte" 24/7-platformapps | permanent aan, UPS |
+| **`starstuff`** | 3× HP DL320 G8 | **bootstrap/genesis + burst-compute** in een flight case — bouwt `sol`, daarna zware/bulk workloads en dev/test | gaat af en toe aan |
+| `voyager` *(later)* | n.t.b. | eerste **autonome** cluster, gelanceerd/beheerd vanuit `sol` — gewoon fleet-lid, geen hub | naar behoefte |
+| `moonbase` / `mars` / `earth` (later) | n.t.b. | extra autonome workload-clusters, beheerd vanuit `sol` | naar behoefte |
+
+`sol` bestaat nog niet — `starstuff` (CP1 `carbon`) is de huidige realiteit.
+Doel-architectuur: `starstuff` → bootstrapt `sol` → `sol` beheert de fleet.
+De rollen zijn hiermee omgedraaid t.o.v. de oorspronkelijke wiki (waar
+`starstuff` zelf de always-on laag was).
 
 Elk cluster heeft een **eigen control plane + etcd + eigen CA** en draait
-autonoom door als `voyager` weg is (laatst toegepaste Talos-config + laatst
-gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
-**beheer-/observability-/DR-hub, geen runtime-afhankelijkheid**.
+autonoom door als `sol` weg is (laatst toegepaste Talos-config + laatst
+gesyncte GitOps-staat; reconcile bij herstel). `sol` is een
+**management-afhankelijkheid, geen runtime-afhankelijkheid**: managed clusters
+draaien hun Kubernetes-workloads gewoon door als `sol` offline is.
 
-"Een nieuwe laag starten zonder `starstuff`": config toevoegen aan Git op
-`voyager` → `voyager`'s provisioner past Talos-config toe op de nieuwe nodes
-→ GitOps bootstrapt de workloads. `starstuff` speelt geen rol.
+"Een nieuwe laag starten": config toevoegen aan Git op `sol` → de
+fleet-tooling op `sol` past Talos-config toe op de nieuwe nodes → GitOps
+bootstrapt de workloads. `starstuff` speelt geen rol (mag uit staan).
+
+### Levenscyclus
+
+1. Er bestaat nog niets.
+2. Bouw / start `starstuff`.
+3. Gebruik `starstuff` + de werkstation-/bootstrap-tooling om `sol` te maken.
+4. Breng `sol` naar een volledig zelfstandige, gezonde staat.
+5. `starstuff` mag nu uit — het is geen runtime-afhankelijkheid meer.
+6. `sol` is voortaan de normale always-on fleet-management/base-cluster.
+7. Maak `voyager` en latere clusters aan vanuit de fleet-tooling op `sol`.
+8. `voyager` en alle latere clusters draaien zelfstandig door als `sol`
+   onbereikbaar is.
+
+`sol`'s pre-GitOps Talos-config komt t.z.t. in `talos/sol/` (nog niet
+aangemaakt), de GitOps-root in `clusters/sol/`.
 
 ---
 
@@ -33,7 +55,8 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
       config-naamgeving, multi-node recept, secrets.yaml YubiKey-backup).
 - [ ] `main` beschermen: overgeslagen voor nu (solo/private) — aanzetten via
       Settings → Rules → Rulesets zodra een 2e persoon meedoet.
-- [ ] GitHub Project + "Voyager"-milestone; overige roadmap-items → issues.
+- [ ] GitHub Project + `sol`-milestone (voorheen "Voyager" genoemd); overige
+      roadmap-items → issues.
 - [ ] Renovate aanzetten (chart-/image-/Talos-versies).
 - [ ] Later: SOPS+age zodat versleutelde `secrets.yaml` per cluster wél de
       repo in kan (nu nog gitignored).
@@ -55,20 +78,21 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
 
 ## 2. Hardware
 
-- [ ] **`voyager`-nodes**: 3× N100/N150/N305 mini-PC (Beelink EQ, GMKtec,
+- [ ] **`sol`-nodes**: 3× N100/N150/N305 mini-PC (Beelink EQ, GMKtec,
       Topton/CWWK). 16 GB min, 32 GB beter (VM + Grafana + Gitea + HA + Argo
       tikt aan). NVMe 500 GB–1 TB, liefst een 2e NVMe voor replicated storage.
       ~30 W always-on voor het drietal. Geen ECC op de meeste N100 — accepteren
       of Ryzen-embedded als het moet.
-- [ ] **UPS** op de `voyager`-stack + NUT voor nette shutdown.
-- [ ] **Eigen VLAN/subnet** voor `voyager`, los van VLAN 9.
+- [ ] **UPS** op de `sol`-stack + NUT voor nette shutdown.
+- [ ] **Eigen VLAN/subnet** voor `sol`, los van VLAN 9.
 - [ ] **SSD-swap DL320-hosts**: 2× Samsung PM1633a 480 GB SAS per host in
       ZFS mirror (`rpool`), i.p.v. de trage HDD's.
 
-## 3. Platform-diensten — **op `voyager`**
+## 3. Platform-diensten — **op `sol`**
 
 > Dit is het "eigenlijke doel" uit de oude wiki, verplaatst van `starstuff`
-> naar `voyager`. Alles GitOps vanuit Git op `voyager`.
+> naar `sol` (de geplande always-on base-cluster). Alles GitOps vanuit Git op
+> `sol`.
 
 ### Tier 0 — Talos/k8s-basis
 
@@ -80,7 +104,7 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
 - [ ] LoadBalancer-IP's: MetalLB of Cilium L2.
 - [ ] cert-manager (Let's Encrypt).
 
-### Tier 1 — management-plane (de reden dat `voyager` bestaat)
+### Tier 1 — management-plane (de reden dat `sol` bestaat)
 
 - [ ] **Gitea/Forgejo** — dé git-bron van waarheid voor álle clusters
       (platform-repo + repo/dir per cluster). Push-mirror naar GitHub voor
@@ -90,10 +114,10 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
       lichter alternatief.
 - [ ] **Secrets** — SOPS + age; encrypted secrets (incl. elke cluster-CA /
       `secrets.yaml`) in Git. OpenBao later voor dynamische secrets.
-- [ ] **Cluster-provisioning** (hoe een nieuwe laag "vanaf `voyager` start"):
+- [ ] **Cluster-provisioning** (hoe een nieuwe laag "vanaf `sol` start"):
       - **Start:** `talosctl` + configs in Git + een Gitea-Actions-runner die
         `apply-config` / `upgrade` doet. Simpel, weinig magie.
-      - **Groeipad:** self-hosted **Omni** op `voyager` — machine-onboarding
+      - **Groeipad:** self-hosted **Omni** op `sol` — machine-onboarding
         via SideroLink (WireGuard), config-templates, image factory,
         cluster-lifecycle. Managed clusters blijven draaien als Omni down is.
         Beste fit voor "spin up moonbase/mars van hieruit".
@@ -104,11 +128,11 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
 
 - [ ] **VictoriaMetrics** i.p.v. vanilla Prometheus — veel lichter op N100,
       lange retentie op kleine disk. + **vmalert**/Alertmanager → e-mail
-      (`koen@terstal.it`) + ntfy/push. Alerts vuren vanaf `voyager`, dus ook
+      (`koen@terstal.it`) + ntfy/push. Alerts vuren vanaf `sol`, dus ook
       als `starstuff` uit is.
 - [ ] **Grafana** — per-cluster dashboards + een fleet-overzicht.
-- [ ] **`starstuff` → `voyager` metrics**: `starstuff` doet `remote_write`
-      naar VM op `voyager` als het aan staat (push, overleeft intermitterend
+- [ ] **`starstuff` → `sol` metrics**: `starstuff` doet `remote_write`
+      naar VM op `sol` als het aan staat (push, overleeft intermitterend
       + NAT). Historie blijft over de aan/uit-cycli heen.
 - [ ] **Blackbox / Uptime Kuma** — probes op iLO's, cluster-API-VIP's,
       externe diensten, ISP.
@@ -137,11 +161,11 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
 
 ## 4. Backups & DR
 
-- [ ] **Backup-orchestrator op `voyager`**: restic/Velero + een MinIO- of
+- [ ] **Backup-orchestrator op `sol`**: restic/Velero + een MinIO- of
       NAS-target. Dekt etcd-snapshots van **alle** clusters + PV-backups.
       Off-site kopie via restic → B2/S3.
 - [ ] **etcd-snapshots** per cluster via cron
-      (`talosctl -n <VIP> etcd snapshot`). `voyager`'s eigen snapshot = het
+      (`talosctl -n <VIP> etcd snapshot`). `sol`'s eigen snapshot = het
       kroonjuweel — off-site.
 - [ ] **PBS**: storage-ID `pbs-ugreen`, backup-job op DL320-host 2 en 3
       (namespaces `pve-dl320-2/3`). VM-snapshots van Talos-guests laag
@@ -156,7 +180,7 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
       storage-extensions (`zfs`/`iscsi-tools`/`nfs-utils` zodra storage
       gekozen is).
 - [ ] **Firewall** (Unifi): mgmt-VLAN → VLAN 9 op 6443/50000/50001;
-      `voyager`-VLAN ↔ VLAN 9 alleen voor beheer. iLO-isolatie: zie §6.
+      `sol`-VLAN ↔ VLAN 9 alleen voor beheer. iLO-isolatie: zie §6.
 - [ ] **Upgrade-runbook**: `talosctl upgrade` + `talosctl upgrade-k8s`,
       volgorde, kubectl mee-swappen, per cluster.
 - [ ] **Security** — PSA staat al op `baseline/restricted`; verder
@@ -186,7 +210,7 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
       - **oost-west**: alleen terminal-pc / PXE-omgeving → de Proxmox-hosts +
         de Talos-VM's (voor `talosctl`/console). Verder niets.
 - [ ] Eén klein, cluster-onafhankelijk apparaat (Raspberry Pi / mini-PC —
-      niet op `voyager`, want dat kan juist weg zijn):
+      niet op `sol`, want dat kan juist weg zijn):
       - **dnsmasq** = DHCP + TFTP + DNS
       - **nginx** = iPXE-script + Talos-assets (Image Factory `metal`) +
         statuspagina
@@ -199,7 +223,7 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
       bootstrap-runbook, config-URL's + checksums. Geen echte captive portal
       (te complex).
 - [ ] Werknaam voor de dienst: `launchpad` (waar je vandaan start).
-- [ ] Volgorde: eerst fleet werkend (starstuff 3-node + voyager), dán dit als
+- [ ] Volgorde: eerst fleet werkend (starstuff 3-node + `sol`), dán dit als
       los vangnet.
 
 ### iLO-isolatie (anti-e-waste: veilig oud spul gebruiken)
@@ -212,7 +236,7 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
       internet-route).
 - [ ] iLO4-hardening: laatste firmware (→ 2.x), TLS 1.2 forceren, zwakke
       ciphers uit, default creds weg, account per persoon, IPMI-over-LAN +
-      SNMP uit indien ongebruikt. NTP naar interne bron; syslog → voyager's
+      SNMP uit indien ongebruikt. NTP naar interne bron; syslog → `sol`'s
       log-stack (als die er is).
 - [ ] Later (optioneel, **niet** voor bootstrap): reverse proxy met auth
       (SSO of basic-auth + IP-allowlist) vóór de iLO's, zodat je van buiten
@@ -220,17 +244,26 @@ gesyncte GitOps-staat; reconcile bij herstel). `voyager` is een
 
 ## 7. Naamgeving
 
-- **Fleet-thema**: ruimtevaart. Clusters: `voyager` (hub), `starstuff`
-      (burst), `moonbase` / `mars` / `earth` (spokes).
+- **Fleet-thema**: ruimtevaart. Clusters: `sol` (always-on base/hub),
+      `starstuff` (bootstrap/genesis + burst), `voyager` (eerste autonome
+      fleet-member), `moonbase` / `mars` / `earth` (latere autonome clusters).
+- **Naamsemantiek** (zonder architectuur-voorkennis leesbaar):
+      - `starstuff` — oermaterie / genesis, waar de fleet uit ontstaat
+      - `sol` — stabiel centrum / thuis / basis
+      - `voyager` — iets dat vanaf die basis naar buiten wordt gelanceerd
 - **Node-thema**: elementen, elementgroep = nodetype (zie
       `from-scratch.md` → "Hostname-schema"):
-      - `starstuff` control plane = CNO: `carbon`, `oxygen`, `nitrogen`
-      - `voyager` nodes = edelgassen: `helium`, `neon`, `argon`
+      - control plane = CNO: `carbon`, `oxygen`, `nitrogen` (`starstuff`)
+      - base-cluster / fleet-hub = aardalkalimetalen: `beryllium`,
+        `magnesium`, `calcium` (`sol`) — stabiel, structureel, de vaste kern
+      - autonome managed clusters = edelgassen (inert, self-contained):
+        `voyager` = `helium`/`neon`/`argon`, `moonbase` =
+        `krypton`/`xenon`/`radon`
       - compute-workers = overgangsmetalen, storage = dichte metalen, GPU =
         halfgeleiders
-- Overweeg: als "hub" thematisch beter een grondstation is (`houston` /
-      `mission-control`) en de reizende namen (`voyager`, `pioneer`, `apollo`,
-      `artemis`) voor de spokes. Werknaam blijft nu `voyager` voor de hub.
+- Eerder overwogen voor de hub: een grondstation-naam (`houston` /
+      `mission-control`). `sol` gekozen — drukt "stabiel centrum" uit zonder
+      extra context en blijft binnen het ruimtevaart-thema.
 - Elke cluster een eigen repo/submap met eigen `.gitignore` voor zijn
       `secrets.yaml` / machine-configs.
 

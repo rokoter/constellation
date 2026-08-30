@@ -100,7 +100,7 @@ Een brainstorm zoals dit doorloopt drie stadia:
 | stadium | waar | vorm |
 |---|---|---|
 | **idee** | `docs/roadmap.md` (1 regel) + dit doc in `docs/` | direct op `main` committen — alleen tekst, geen branch nodig |
-| **uitwerking** | GitHub Issue in `constellation`, label `side-quest`, onder de Voyager-milestone | discussie, checklist, linkt naar de PR('s) |
+| **uitwerking** | GitHub Issue in `constellation`, label `side-quest`, onder de `sol`-milestone | discussie, checklist, linkt naar de PR('s) |
 | **bouwen** | feature branch(es) | `feat/cluster-status-service` voor het in-cluster deel (map `platform/cluster-status/`); de **ESP32-firmware in een aparte repo** (`constellation-eink-display`) — firmware hoort niet in de fleet-repo |
 
 Concreet nu: dit document + een pointer in `docs/roadmap.md`, verder niets.

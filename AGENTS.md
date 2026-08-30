@@ -18,13 +18,16 @@ as an explicit, separate step.**
 
 | cluster | hardware | role | uptime |
 |---|---|---|---|
-| `voyager` *(planned)* | 3× N100-class mini-PC | always-on hub: management-plane (Git, GitOps, provisioning), observability, 24/7 apps | permanent, UPS |
-| `starstuff` | 3× HP DL320 G8 on Proxmox | burst-compute in a flight case | powered on occasionally |
-| `moonbase`/`mars`/`earth` *(later)* | TBD | workload spokes, provisioned from `voyager` | on demand |
+| `sol` *(planned)* | 3× N100-class mini-PC | always-on base: fleet management-plane (Git, GitOps, provisioning), observability, DR, 24/7 apps | permanent, UPS |
+| `starstuff` | 3× HP DL320 G8 on Proxmox | bootstrap/genesis + burst-compute in a flight case | powered on occasionally |
+| `voyager` *(later)* | TBD | first autonomous cluster, launched/managed from `sol` | on demand |
+| `moonbase`/`mars`/`earth` *(later)* | TBD | further autonomous workload clusters, managed from `sol` | on demand |
 
-Every cluster has its own CA + etcd and keeps running autonomously when
-`voyager` is down. `voyager` is management / observability / DR — **not** a
-runtime dependency of the others.
+Mental model: **`starstuff` builds `sol`; `sol` launches `voyager`s.** Every
+cluster has its own CA + etcd + control plane and keeps running autonomously
+when `sol` is down. `sol` is management / observability / DR — a management
+dependency, **not** a runtime dependency of the others. `sol` does not exist
+yet; `starstuff` (CP1 `carbon`) is the current reality.
 
 ## Current state (2026-08-30)
 
@@ -32,8 +35,9 @@ runtime dependency of the others.
   v1.13.9, Kubernetes v1.36.3, Flannel CNI.
 - GitHub repo live: `rokoter/constellation` (private). Issues #1–#4 open
   (docs/backup work).
-- Not done yet: CP2 (`oxygen`) / CP3 (`nitrogen`), control-plane VIP,
-  `voyager`, any platform services.
+- Not done yet: CP2 (`oxygen`) / CP3 (`nitrogen`), control-plane VIP, `sol`
+  (the planned always-on base, bootstrapped from `starstuff`), `voyager` and
+  later fleet members, any platform services.
 - Next concrete steps: `docs/roadmap.md` §1 — CP2 on host 2 per
   `talos/starstuff/README.md` §5–§7, then CP3, then VIP.
 - Bootstrap lessons from the manual CP1 run:
@@ -54,14 +58,16 @@ apps/            application manifests                          — not created 
 
 - **Git flow**: trunk-based on `main`. Short `feat/`/`fix/`/`docs/` branches +
   PR (even solo — CI + a review moment). Milestones/epics = GitHub Issues.
-  "Project Voyager" is a milestone, **not a separate repo**. Separate repos
+  The `sol` build-out is a milestone, **not a separate repo**. Separate repos
   only for genuinely standalone products (e.g. ESP32 firmware
   `constellation-eink-display`).
 - **Naming**: spaceflight theme for clusters. Nodes = **chemical elements
   where the element group encodes the node type**: CNO = control plane
-  (`carbon`/`oxygen`/`nitrogen`), noble gases = `voyager`
-  (`helium`/`neon`/`argon`), transition metals = compute, dense metals =
-  storage, semiconductors = GPU. See `docs/from-scratch.md` → "Hostname-schema".
+  (`carbon`/`oxygen`/`nitrogen`), alkaline-earth metals = base cluster `sol`
+  (`beryllium`/`magnesium`/`calcium`), noble gases = autonomous managed
+  clusters (`voyager` = `helium`/`neon`/`argon`, `moonbase` = `krypton`/…),
+  transition metals = compute, dense metals = storage, semiconductors = GPU.
+  See `docs/from-scratch.md` → "Hostname-schema".
 - **Secrets**: never committed in plaintext. Gitignored: `secrets.yaml`,
   `controlplane*.yaml`, `worker*.yaml`, `talosconfig`, `kubeconfig`. Future:
   SOPS+age for encrypted secrets that may enter the repo.

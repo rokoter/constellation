@@ -55,13 +55,15 @@ en `patches/carbon.yaml` (wél veilig, referentie voor de gewenste
 - 3x HP ProLiant DL320 G8 v2, elk Proxmox VE 9.2 bare-metal
 - Elke host draait 1 Talos control-plane VM (+ later een lichte worker-VM)
 - **Rolverschuiving (zie `roadmap.md` → "Fleet-model"):** `starstuff` wordt
-  **burst-compute** in een flight case die af en toe aan gaat. De always-on
-  management-/monitoring-/git-laag verhuist naar een apart zuinig cluster
-  **`voyager`** (N100-nodes). Elke cluster is autonoom (eigen CA + etcd);
-  `voyager` is de beheer-/DR-hub, geen runtime-afhankelijkheid.
+  **bootstrap/genesis + burst-compute** in een flight case die af en toe aan
+  gaat. De always-on management-/monitoring-/git-laag verhuist naar een apart
+  zuinig cluster **`sol`** (N100-nodes; in eerdere notities `voyager` genoemd
+  — die naam is nu de eerste autonome fleet-member, gelanceerd vanuit `sol`).
+  Elke cluster is autonoom (eigen CA + etcd); `sol` is de beheer-/DR-hub, een
+  management-afhankelijkheid, geen runtime-afhankelijkheid.
 - Oorspronkelijk doel van `starstuff` (semi-stabiele bootstrap-laag met
   monitoring, security, patch management, alerting, Gitea) = nu de rol van
-  `voyager`.
+  `sol`.
 
 ## Hardware per host
 
@@ -139,7 +141,8 @@ en `patches/carbon.yaml` (wél veilig, referentie voor de gewenste
 - Clusternaam: **`starstuff`** (Sagan-referentie — "we are made of starstuff")
 - Hostname-schema: **elementen**, elementgroep codeert het nodetype
   (CNO = control plane, overgangsmetalen = compute, dichte metalen = storage,
-  edelgassen = edge-cluster). Volledig in `from-scratch.md` → "Hostname-schema"
+  aardalkali = base-cluster `sol`, edelgassen = autonome managed clusters).
+  Volledig in `from-scratch.md` → "Hostname-schema"
 - `.gitignore` bevat: `secrets.yaml`, `controlplane*.yaml`, `worker*.yaml`,
   `talosconfig`, `kubeconfig`, `*.kubeconfig`, `*.secret.yaml`
   → `secrets.yaml` is het belangrijkste bestand: bevat de gedeelde
@@ -293,7 +296,8 @@ staan ook in `../AGENTS.md`.
 - PBS-storage + `talosctl etcd snapshot`-cron (zie `from-scratch.md` →
   "Backupstrategie" — VM-snapshots van Talos-nodes hebben weinig waarde)
 - Worker-VM's plannen zodra storage-oplossing voor persistent volumes bekend is
-- Zie `roadmap.md` voor het losstaande edge-cluster op zuinige nodes
+- Zie `roadmap.md` voor de geplande always-on base-cluster `sol` op zuinige
+  nodes (in eerdere notities "edge-cluster" / `voyager`)
 
 ## Troubleshooting-log: pve-dl320-1 dist-upgrade freeze
 

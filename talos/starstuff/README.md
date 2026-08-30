@@ -3,6 +3,11 @@
 Pre-GitOps Talos-config voor cluster **`starstuff`** (3× HP DL320 G8 op
 Proxmox). Volledige stap-voor-stap: [`../../docs/from-scratch.md`](../../docs/from-scratch.md).
 
+> `starstuff` is de **bootstrap/genesis-cluster** van de fleet: hieruit wordt
+> straks de always-on base-cluster `sol` gebouwd (config komt in `talos/sol/`,
+> nog niet aangemaakt). Zie
+> [`../../docs/roadmap.md`](../../docs/roadmap.md) → "Fleet-model".
+
 ## Bestanden
 
 | bestand | in Git? | inhoud |

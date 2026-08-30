@@ -9,12 +9,16 @@ mens/AI: [`CREDITS.md`](CREDITS.md).
 
 | cluster | hardware | rol |
 |---|---|---|
-| `voyager` *(gepland)* | 3× N100-class mini-PC, zuinig | always-on hub: management-plane, observability, 24/7-apps |
-| `starstuff` | 3× HP DL320 G8 (Proxmox) | burst-compute in een flight case — gaat af en toe aan |
-| `moonbase` / `mars` / `earth` *(later)* | n.t.b. | extra workload-clusters, gestart vanaf `voyager` |
+| `sol` *(gepland)* | 3× N100-class mini-PC, zuinig | always-on base: fleet-management, observability, DR, 24/7-platformapps |
+| `starstuff` | 3× HP DL320 G8 (Proxmox) | bootstrap + burst-compute in een flight case — gaat af en toe aan |
+| `voyager` *(later)* | n.t.b. | eerste autonome cluster, gelanceerd/beheerd vanuit `sol` |
+| `moonbase` / `mars` / `earth` *(later)* | n.t.b. | extra autonome workload-clusters, beheerd vanuit `sol` |
 
-Elke cluster heeft een eigen CA + etcd en draait autonoom door als `voyager`
-weg is. `voyager` is beheer/observability/DR — geen runtime-afhankelijkheid.
+Mentaal model: **`starstuff` bouwt `sol`; `sol` lanceert `voyager`s.** Elke
+cluster heeft een eigen CA + etcd + control plane en draait autonoom door als
+`sol` weg is. `sol` is beheer/observability/DR — een
+management-afhankelijkheid, **geen** runtime-afhankelijkheid. `sol` bestaat
+nog niet; `starstuff` (CP1 `carbon`) is de huidige realiteit.
 Zie [`docs/roadmap.md`](docs/roadmap.md) → "Fleet-model".
 
 ## Layout
@@ -37,8 +41,9 @@ apps/                  applicatie-manifests                          — later
 
 - **Naamgeving**: ruimtevaart-thema. Clusters = missies/plaatsen; nodes =
   elementen waarbij de elementgroep het nodetype codeert (CNO = control plane,
-  edelgassen = `voyager`, overgangsmetalen = compute, dichte metalen = storage).
-  Details in `docs/from-scratch.md` → "Hostname-schema".
+  aardalkali = base-cluster `sol`, edelgassen = autonome managed clusters
+  (`voyager`, `moonbase`, …), overgangsmetalen = compute, dichte metalen =
+  storage). Details in `docs/from-scratch.md` → "Hostname-schema".
 - **Git-flow**: trunk-based op `main`, korte `feat/` `fix/` `docs/`-branches
   met PR. CI valideert Talos-configs en manifests. Milestones/epics als
   GitHub Issues.

@@ -11,8 +11,9 @@ structuur, en stelt commando's en opties voor.
 
 **Koens inbreng.** Doel, scope en filosofie — less is more, anti-e-waste,
 thematische naamgeving. Hardware- en netwerkkeuzes. Alle beslissingen:
-monorepo, clusternaam, hostname-schema, en de fleet-rolverdeling met
-`voyager` als always-on hub. Alle state-wijzigende acties: VM's bouwen,
+monorepo, clusternaam, hostname-schema, en de fleet-rolverdeling met een
+geplande always-on base-cluster (`sol`) als hub. Alle state-wijzigende
+acties: VM's bouwen,
 `talosctl apply-config` en `bootstrap`, de GitHub-push, de issues. En de
 testinput met terugkoppeling naar volgende sessies.
 
@@ -20,7 +21,7 @@ testinput met terugkoppeling naar volgende sessies.
 oorzaak in Talos 1.12+ en de fix, met bronnen. De repo geherstructureerd naar
 de monorepo-layout. Alle documentatie geschreven: runbook, roadmap, wiki,
 `AGENTS.md`, de side-quest-ontwerpen en de sessie-post-mortems. De
-fleet-architectuur uitgewerkt — tiers voor `voyager`, backup-strategie,
+fleet-architectuur uitgewerkt — tiers voor de base-cluster (`sol`), backup-strategie,
 recovery-netwerk. CI, `.gitignore`-hardening en de GitHub-issues opgesteld.
 
 **Transparantie.** Vrijwel alle tekst in deze repo is door Claude opgesteld
